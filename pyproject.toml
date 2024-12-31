@@ -9,7 +9,16 @@ readme = "README.md"
 python = "^3.13"
 requests = "^2.32.3"
 openai = "^1.58.1"
+google-generativeai = "^0.8.3"
 
+
+[tool.poetry.group.dev.dependencies]
+autopep8 = "^2.3.1"
+flake8 = "^7.1.1"
+ruff = "^0.8.4"
+prettier = "^0.0.7"
+black = "^24.10.0"
+pytest = "^8.3.4"
 
 [build-system]
 requires = ["poetry-core"]

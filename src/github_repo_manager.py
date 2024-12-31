@@ -7,18 +7,19 @@ using OpenAI's GPT-3.
 """
 
 import os
+import sys
 
-import openai
 import requests
+
+
+from gemini_text_fetcher import GeminiTextFetcher
 
 # Configuration
 GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 GITHUB_USERNAME = os.getenv("GITHUB_USERNAME")
 HEADERS = {"Authorization": f"token {GITHUB_TOKEN}"}
 
-# OpenAI Configuration
-openai.api_key = OPENAI_API_KEY
 
 
 class GitHubRepoManager:
@@ -26,6 +27,8 @@ class GitHubRepoManager:
     def __init__(self, github_username, headers):
         self.github_username = github_username
         self.headers = headers
+        self.gen = GeminiTextFetcher(GOOGLE_API_KEY)
+        self.gen.configure_api()
 
     def fetch_repositories(self):
         """Fetch all repositories for the authenticated user."""
@@ -49,15 +52,13 @@ class GitHubRepoManager:
     def generate_content(self, prompt):
         """Generate content using OpenAI."""
         try:
-            response = openai.Completion.create(
-                model="text-davinci-003",
-                prompt=prompt,
-                max_tokens=100,
-            )
-            return response.choices[0].text.strip()
-        except openai.error.OpenAIError as e:
+            response =self.gen.generate_text(prompt)
+            return response
+        except Exception as e:
             print(f"Error generating content: {e}")
-            return ""
+            sys.exit(1)
+
+
 
     def update_repository(self, repo, description=None, topics=None):
         """Update the repository with a new description or topics."""
@@ -106,15 +107,15 @@ class GitHubRepoManager:
 
             if not topics:
                 prompt = f"Suggest 3-5 tags for a GitHub repository named '{repo['name']}' for better discoverability."
-                topics_text = self.generate_content(prompt)
-                topics = [tag.strip() for tag in topics_text.split(",") if tag.strip()]
-                print(f"Generated Topics: {topics}")
+                # topics_text = self.generate_content(prompt)
+                # topics = [tag.strip() for tag in topics_text.split(",") if tag.strip()]
+                # print(f"Generated Topics: {topics}")
 
             # Update the repository
             print("Updating repository...")
-            updated_repo = self.update_repository(repo, description, topics)
-            if updated_repo:
-                print(f"Repository '{repo['name']}' updated successfully.\n")
+            # updated_repo = self.update_repository(repo, description, topics)
+            # if updated_repo:
+            #    print(f"Repository '{repo['name']}' updated successfully.\n")
 
 
 # Usage
