@@ -101,12 +101,17 @@ class GitHubRepoManager:
             topics = repo.get("topics")
 
             if not description:
-                prompt = f"Generate a concise GitHub repository description for a project named '{repo['name']}'."
+                prompt = f"""
+                Generate a concise GitHub repository description
+                 for a project named '{repo['name']}'."""
                 description = self.generate_content(prompt)
                 print(f"Generated Description: {description}")
 
             if not topics:
-                prompt = f"Suggest 3-5 tags for a GitHub repository named '{repo['name']}' for better discoverability."
+                prompt = f"""
+                Suggest 3-5 tags for a GitHub repository
+                 named '{repo['name']}' for better discoverability.
+                 """
                 # topics_text = self.generate_content(prompt)
                 # topics = [tag.strip() for tag in topics_text.split(",") if tag.strip()]
                 # print(f"Generated Topics: {topics}")
