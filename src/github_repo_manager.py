@@ -131,6 +131,10 @@ class GitHubRepoManager:
             # updated_repo = self.update_repository(repo, description, topics)
             # if updated_repo:
             #    print(f"Repository '{repo['name']}' updated successfully.\n")
+        print(
+            f"{len(missing_fields)} repositories are missing descriptions or topics.\n"
+        )
+
 
 
 # Usage
