@@ -10,6 +10,7 @@ import os
 import sys
 
 import requests
+import pandas as pd
 
 
 from gemini_text_fetcher import GeminiTextFetcher
@@ -33,8 +34,12 @@ class GitHubRepoManager:
     def fetch_repositories(self):
         """Fetch all repositories for the authenticated user."""
         url = f"https://api.github.com/users/{self.github_username}/repos"
+        params = {"per_page": 190}
         try:
-            response = requests.get(url, headers=self.headers, timeout=5)
+            response = requests.get(url,
+                                    params=params,
+                                    headers=self.headers,
+                                    timeout=5)
             response.raise_for_status()
             return response.json()
         except requests.RequestException as e:
@@ -95,6 +100,11 @@ class GitHubRepoManager:
             f"{len(missing_fields)} repositories are missing descriptions or topics.\n"
         )
 
+
+        df = pd.DataFrame(missing_fields)
+        print(df)
+        df.to_csv("missing_fields.csv") 
+        df.to_excel("missing_fields.xlsx") 
         for repo in missing_fields:
             print(f"Processing repository: {repo['name']}")
             description = repo.get("description")
@@ -104,8 +114,8 @@ class GitHubRepoManager:
                 prompt = f"""
                 Generate a concise GitHub repository description
                  for a project named '{repo['name']}'."""
-                description = self.generate_content(prompt)
-                print(f"Generated Description: {description}")
+                # description = self.generate_content(prompt)
+                # print(f"Generated Description: {description}")
 
             if not topics:
                 prompt = f"""
