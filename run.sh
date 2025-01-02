@@ -1,0 +1,1 @@
+python3 src/github_repo_manager.py

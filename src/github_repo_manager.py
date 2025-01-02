@@ -8,24 +8,31 @@ using OpenAI's GPT-3.
 
 import os
 import sys
-
-import requests
+from dotenv import load_dotenv
 import pandas as pd
-
+import requests
 
 from gemini_text_fetcher import GeminiTextFetcher
 
+# Load environment variables from .env file
+load_dotenv()
+
 # Configuration
 GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
-GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 GITHUB_USERNAME = os.getenv("GITHUB_USERNAME")
 HEADERS = {"Authorization": f"token {GITHUB_TOKEN}"}
 
 
-
 class GitHubRepoManager:
     """A class to manage GitHub repositories."""
+
     def __init__(self, github_username, headers):
+        # try get fgithub token from env except exit
+        if not GITHUB_TOKEN:
+            print("Error: GITHUB_TOKEN is missing.")
+            sys.exit(1)
+
         self.github_username = github_username
         self.headers = headers
         self.gen = GeminiTextFetcher(GOOGLE_API_KEY)
@@ -34,14 +41,33 @@ class GitHubRepoManager:
     def fetch_repositories(self):
         """Fetch all repositories for the authenticated user."""
         url = f"https://api.github.com/users/{self.github_username}/repos"
-        params = {"per_page": 190}
+        params = {"per_page": 100}
         try:
-            response = requests.get(url,
-                                    params=params,
-                                    headers=self.headers,
-                                    timeout=5)
+            response = requests.get(
+                url,
+                params=params,
+                headers=self.headers,
+                timeout=5,
+            )
+            params["page"] = 2
+            response2 = requests.get(
+                url,
+                params=params,
+                headers=self.headers,
+                timeout=5,
+            )
+            print(response2.json())
             response.raise_for_status()
-            return response.json()
+            # merge these two responses
+            response.json().extend(response2.json())
+            df = pd.DataFrame(response.json())
+            df2 = pd.DataFrame(response2.json())
+            df = pd.concat([df, df2])
+            df.to_excel("repos.xlsx")
+            df.to_csv("repos.csv")
+            return df
+            # get next page
+
         except requests.RequestException as e:
             print(f"Error fetching repositories: {e}")
             return []
@@ -57,13 +83,11 @@ class GitHubRepoManager:
     def generate_content(self, prompt):
         """Generate content using OpenAI."""
         try:
-            response =self.gen.generate_text(prompt)
+            response = self.gen.generate_text(prompt)
             return response
         except Exception as e:
             print(f"Error generating content: {e}")
             sys.exit(1)
-
-
 
     def update_repository(self, repo, description=None, topics=None):
         """Update the repository with a new description or topics."""
@@ -88,8 +112,6 @@ class GitHubRepoManager:
     def process_repositories(self):
         """Fetch repositories and update missing fields."""
         repos = self.fetch_repositories()
-        if not repos:
-            return
 
         missing_fields = self.check_missing_fields(repos)
         if not missing_fields:
@@ -100,11 +122,10 @@ class GitHubRepoManager:
             f"{len(missing_fields)} repositories are missing descriptions or topics.\n"
         )
 
-
         df = pd.DataFrame(missing_fields)
         print(df)
-        df.to_csv("missing_fields.csv") 
-        df.to_excel("missing_fields.xlsx") 
+        df.to_csv("missing_fields.csv")
+        df.to_excel("missing_fields.xlsx")
         for repo in missing_fields:
             print(f"Processing repository: {repo['name']}")
             description = repo.get("description")
@@ -134,7 +155,6 @@ class GitHubRepoManager:
         print(
             f"{len(missing_fields)} repositories are missing descriptions or topics.\n"
         )
-
 
 
 # Usage
