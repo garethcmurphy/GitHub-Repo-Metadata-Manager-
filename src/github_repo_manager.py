@@ -8,9 +8,10 @@ using OpenAI's GPT-3.
 
 import os
 import sys
-from dotenv import load_dotenv
+
 import pandas as pd
 import requests
+from dotenv import load_dotenv
 
 from gemini_text_fetcher import GeminiTextFetcher
 
@@ -19,7 +20,7 @@ load_dotenv()
 
 # Configuration
 GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 GITHUB_USERNAME = os.getenv("GITHUB_USERNAME")
 HEADERS = {"Authorization": f"token {GITHUB_TOKEN}"}
 
@@ -72,22 +73,10 @@ class GitHubRepoManager:
             print(f"Error fetching repositories: {e}")
             return []
 
-    def check_missing_fields(self, repos):
-        """Check for repositories missing descriptions or topics."""
-        missing_fields = []
-        for repo in repos:
-            if not repo.get("description") or not repo.get("topics"):
-                missing_fields.append(repo)
-        return missing_fields
-
     def generate_content(self, prompt):
-        """Generate content using OpenAI."""
-        try:
-            response = self.gen.generate_text(prompt)
-            return response
-        except Exception as e:
-            print(f"Error generating content: {e}")
-            sys.exit(1)
+        """Generate content using LLM."""
+        response = self.gen.generate_text(prompt)
+        return response
 
     def update_repository(self, repo, description=None, topics=None):
         """Update the repository with a new description or topics."""
@@ -111,50 +100,7 @@ class GitHubRepoManager:
 
     def process_repositories(self):
         """Fetch repositories and update missing fields."""
-        repos = self.fetch_repositories()
-
-        missing_fields = self.check_missing_fields(repos)
-        if not missing_fields:
-            print("All repositories have descriptions and topics!")
-            return
-
-        print(
-            f"{len(missing_fields)} repositories are missing descriptions or topics.\n"
-        )
-
-        df = pd.DataFrame(missing_fields)
-        print(df)
-        df.to_csv("missing_fields.csv")
-        df.to_excel("missing_fields.xlsx")
-        for repo in missing_fields:
-            print(f"Processing repository: {repo['name']}")
-            description = repo.get("description")
-            topics = repo.get("topics")
-
-            if not description:
-                prompt = f"""
-                Generate a concise GitHub repository description
-                 for a project named '{repo['name']}'."""
-                # description = self.generate_content(prompt)
-                # print(f"Generated Description: {description}")
-
-            if not topics:
-                prompt = f"""
-                Suggest 3-5 tags for a GitHub repository
-                 named '{repo['name']}' for better discoverability.
-                 """
-                # topics_text = self.generate_content(prompt)
-                # topics = [tag.strip() for tag in topics_text.split(",") if tag.strip()]
-                # print(f"Generated Topics: {topics}")
-
-            # Update the repository
-            print("Updating repository...")
-            # updated_repo = self.update_repository(repo, description, topics)
-            # if updated_repo:
-            #    print(f"Repository '{repo['name']}' updated successfully.\n")
-        print(
-            f"{len(missing_fields)} repositories are missing descriptions or topics.\n"
-        )
+        self.fetch_repositories()
 
 
 # Usage
