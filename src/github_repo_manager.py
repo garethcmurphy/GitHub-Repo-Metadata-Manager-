@@ -3,7 +3,7 @@
 get-github-repos.py: A Python script to fetch all
 repositories for the authenticated user and update
 repositories with missing descriptions or topics
-using OpenAI's GPT-3.
+using Google Gemini API.
 """
 
 import os
