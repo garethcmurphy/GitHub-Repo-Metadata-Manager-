@@ -100,7 +100,15 @@ class GitHubRepoManager:
 
     def process_repositories(self):
         """Fetch repositories and update missing fields."""
-        self.fetch_repositories()
+        repos = self.fetch_repositories()
+
+        # check if topic column is has any missing values
+        if repos["topics"].isnull().sum() > 0:
+            repos["topics"] = repos["topics"].fillna("")
+        # find most common topics
+        topics = repos["topics"].str.split(",").explode().value_counts()
+        print(topics)
+
 
 
 # Usage
